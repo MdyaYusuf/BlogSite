@@ -14,16 +14,20 @@ public class PostService : IPostService
 {
   private readonly IPostRepository _postRepository;
   private readonly IMapper _mapper;
-  public PostService(IPostRepository postRepository, IMapper mapper)
+  private readonly PostBusinessRules _businessRules;
+  public PostService(IPostRepository postRepository, IMapper mapper, PostBusinessRules businessRules)
   {
     _postRepository = postRepository;
     _mapper = mapper;
+    _businessRules = businessRules;
   }
 
   public async Task<ReturnModel<PostResponseDto>> AddAsync(CreatePostRequest request)
   {
     try
     {
+      await _businessRules.IsTitleUnique(request.Title);
+
       Post createdPost = _mapper.Map<Post>(request);
       createdPost.Id = Guid.NewGuid();
       await _postRepository.AddAsync(createdPost);
@@ -113,6 +117,8 @@ public class PostService : IPostService
   {
     try
     {
+      await _businessRules.IsPostExistsAsync(id);
+
       Post post = await _postRepository.GetByIdAsync(id);
       Post deletedPost = await _postRepository.RemoveAsync(post);
       PostResponseDto response = _mapper.Map<PostResponseDto>(deletedPost);
@@ -143,6 +149,8 @@ public class PostService : IPostService
   {
     try
     {
+      await _businessRules.IsPostExistsAsync(request.Id);
+
       Post existingPost = await _postRepository.GetByIdAsync(request.Id);
 
       existingPost.CategoryId = existingPost.CategoryId;

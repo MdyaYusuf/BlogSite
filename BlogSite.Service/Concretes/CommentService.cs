@@ -14,10 +14,12 @@ public class CommentService : ICommentService
 {
   private readonly ICommentRepository _commentRepository;
   private readonly IMapper _mapper;
-  public CommentService(ICommentRepository commentRepository, IMapper mapper)
+  private readonly CommentBusinessRules _businessRules;
+  public CommentService(ICommentRepository commentRepository, IMapper mapper, CommentBusinessRules businessRules)
   {
     _commentRepository = commentRepository;
     _mapper = mapper;
+    _businessRules = businessRules;
   }
 
   public async Task<ReturnModel<CommentResponseDto>> AddAsync(CreateCommentRequest request)
@@ -112,6 +114,8 @@ public class CommentService : ICommentService
   {
     try
     {
+      await _businessRules.IsCommentExistAsync(id);
+
       Comment comment = await _commentRepository.GetByIdAsync(id);
       Comment deletedComment = await _commentRepository.RemoveAsync(comment);
       CommentResponseDto response = _mapper.Map<CommentResponseDto>(deletedComment);
@@ -142,6 +146,8 @@ public class CommentService : ICommentService
   {
     try
     {
+      await _businessRules.IsCommentExistAsync(request.Id);
+
       Comment existingComment = await _commentRepository.GetByIdAsync(request.Id);
 
       existingComment.Id = existingComment.Id;

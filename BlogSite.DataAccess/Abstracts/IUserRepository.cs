@@ -5,5 +5,5 @@ namespace BlogSite.DataAccess.Abstracts;
 
 public interface IUserRepository : IRepository<User, long>
 {
-
+  Task<User?> GetByEmailAsync(string email);
 }

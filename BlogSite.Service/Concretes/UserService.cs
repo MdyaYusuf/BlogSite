@@ -14,16 +14,21 @@ public class UserService : IUserService
 {
   private readonly IUserRepository _userRepository;
   private readonly IMapper _mapper;
-  public UserService(IUserRepository userRepository, IMapper mapper)
+  private readonly UserBusinessRules _businessRules;
+  public UserService(IUserRepository userRepository, IMapper mapper, UserBusinessRules businessRules)
   {
     _userRepository = userRepository;
     _mapper = mapper;
+    _businessRules = businessRules;
   }
 
   public async Task<ReturnModel<UserResponseDto>> AddAsync(CreateUserRequest request)
   {
     try
     {
+      await _businessRules.IsEmailUniqueAsync(request.Email);
+      await _businessRules.IsPasswordValidAsync(request.Password);
+
       User createdUser = _mapper.Map<User>(request);
       await _userRepository.AddAsync(createdUser);
       UserResponseDto response = _mapper.Map<UserResponseDto>(createdUser);
@@ -112,6 +117,8 @@ public class UserService : IUserService
   {
     try
     {
+      await _businessRules.IsUserExistAsync(id);
+
       User user = await _userRepository.GetByIdAsync(id);
       User deletedUser = await _userRepository.RemoveAsync(user);
       UserResponseDto response = _mapper.Map<UserResponseDto>(deletedUser);
@@ -142,6 +149,10 @@ public class UserService : IUserService
   {
     try
     {
+      await _businessRules.IsUserExistAsync(request.Id);
+      await _businessRules.IsEmailUniqueAsync(request.Email);
+      await _businessRules.IsPasswordValidAsync(request.Password);
+
       User existingUser = await _userRepository.GetByIdAsync(request.Id);
 
       existingUser.Id = existingUser.Id;

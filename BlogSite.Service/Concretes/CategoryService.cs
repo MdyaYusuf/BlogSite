@@ -14,16 +14,20 @@ public class CategoryService : ICategoryService
 {
   private readonly ICategoryRepository _categoryRepository;
   private readonly IMapper _mapper;
-  public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
+  private readonly CategoryBusinessRules _businessRules;
+  public CategoryService(ICategoryRepository categoryRepository, IMapper mapper, CategoryBusinessRules businessRules)
   {
     _categoryRepository = categoryRepository;
     _mapper = mapper;
+    _businessRules = businessRules;
   }
 
   public async Task<ReturnModel<CategoryResponseDto>> AddAsync(CreateCategoryRequest request)
   {
     try
     {
+      await _businessRules.IsNameUnique(request.Name);
+
       Category createdCategory = _mapper.Map<Category>(request);
       await _categoryRepository.AddAsync(createdCategory);
       CategoryResponseDto response = _mapper.Map<CategoryResponseDto>(createdCategory);
@@ -112,6 +116,8 @@ public class CategoryService : ICategoryService
   {
     try
     {
+      await _businessRules.IsCategoryExistAsync(id);
+
       Category category = await _categoryRepository.GetByIdAsync(id);
       Category deletedCategory = await _categoryRepository.RemoveAsync(category);
       CategoryResponseDto response = _mapper.Map<CategoryResponseDto>(deletedCategory);
@@ -142,6 +148,8 @@ public class CategoryService : ICategoryService
   {
     try
     {
+      await _businessRules.IsCategoryExistAsync(request.Id);
+
       Category existingCategory = await _categoryRepository.GetByIdAsync(request.Id);
 
       existingCategory.Id = existingCategory.Id;

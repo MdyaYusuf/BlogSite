@@ -5,5 +5,5 @@ namespace BlogSite.DataAccess.Abstracts;
 
 public interface IPostRepository : IRepository<Post, Guid>
 {
-  
+  Task<Post?> GetByTitleAsync(string title);
 }
